@@ -261,6 +261,8 @@ Python requirements:
 
 Use for: "Analyze VM", "Analyze jsVMP", "Restore opcode", "Restore bytecode."
 
+If obfuscation is encountered, try using AST to recover the obfuscated code.
+
 Process:
 
 1. Confirm whether it is actually VM/jsVMP: large arrays, bytecode, constant pool, `while/switch` dispatch, opcode, pc/sp/stack/context/register, handler table.
