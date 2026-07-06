@@ -23,10 +23,10 @@ Authorization scope is the safety boundary. If the user has not established auth
 
 1. Reconstruct the request before analysis: goal, inputs, expected output, constraints, and ambiguities.
 2. Inventory the supplied materials and name missing evidence.
-3. Route the task to the smallest relevant branch: parameter generation, key discovery, payload decryption, algorithm identification, request replay, VM/jsVMP, anti-debugger, Electron, or remote debugging.
+3. Route the task to the smallest relevant branch and choose the reproduction mode before extracting code.
 4. Build an evidence chain: code locations, call graph, inputs, return values, runtime variables, and request samples.
 5. Prefer the smallest verifiable path. Restore only the target parameter path unless full deobfuscation is necessary.
-6. Rebuild the execution context before reproducing code.
+6. Rebuild only the execution context required by the chosen reproduction mode.
 7. Verify by comparing sample input/output or original/replayed requests.
 8. Answer with solution, evidence, rationale, risks, verification, and alternatives.
 
@@ -67,6 +67,23 @@ Recommended next step:
 
 A task can match multiple branches. Start with the narrowest branch that can answer the user.
 
+## Reverse Reproduction Modes
+
+Choose the final execution mode before extracting code. Do not default to full browser-environment restoration when the requested deliverable can be verified with a smaller boundary.
+
+| Mode | Use when | Extraction boundary | Default deliverable | Verification |
+|---|---|---|---|---|
+| 1. In-site extraction | The final method must run inside the original target website. | Extract only the target method plus directly used local helpers, local variables, and closure values. Keep page globals as page-provided. | Console/CDP snippet, userscript, or small pasted function for the target page. | Call the method in the real page context and compare the returned value or generated request. |
+| 2. Local Node service | Code is extracted but the final runtime is local and must not depend on a browser environment. | Extract the target path and replace browser dependencies with explicit inputs or minimal deterministic mocks. | Node.js runner plus a small local HTTP interface that any tool can call. | Call the local endpoint with a sample and compare signature, ciphertext, payload, or request fields. |
+| 3. Pure algorithm port | The target is pure calculation: codec, hash, HMAC, encryption, decryption, sorting, or numeric/string transformation. | Re-implement the algorithm in Python, JavaScript, or another suitable language using standard primitives where possible. | Pure function or CLI script with no browser, DOM, page SDK, or live runtime dependency. | Verify sample pairs, round trips, and edge cases. |
+
+Mode rules:
+
+- If the deliverable runs in the target website, use Mode 1. Do not rebuild `window`, `document`, browser globals, webpack runtime, or global variables unless the target method directly consumes them and the page does not already provide them.
+- If the deliverable must be consumed by external tools but still depends on extracted JavaScript behavior, use Mode 2. Default to Node.js and expose one small local interface rather than forcing every caller to embed the reverse code.
+- If the logic is pure math, encoding, hashing, signing, encryption, or decryption and can be proven with samples, use Mode 3. Prefer a clean pure implementation over executing copied browser code.
+- If the correct mode is unclear, state the competing modes and the evidence needed to choose one.
+
 ## Evidence-First Rules
 
 - Do not say "looks like AES" or "probably MD5" without evidence. State the code location, input/output shape, function arguments, and confidence.
@@ -79,6 +96,8 @@ A task can match multiple branches. Start with the narrowest branch that can ans
 ## Rebuild the Execution Context
 
 When extracting code for protocol or frontend encryption analysis, restore the execution context layer by layer. Do not copy only the target function and assume it is enough. Browser and runtime dependencies often decide the final signature or ciphertext.
+
+For Mode 1 in-site extraction, the real page is the execution context. Keep the extraction narrow and reuse the page's native globals instead of rebuilding them locally.
 
 Rebuild in this order:
 
@@ -111,6 +130,7 @@ Output:
 
 ```text
 [Parameter]
+[Reproduction mode]
 [Generation entry]
 [Call chain]
 [Participating fields]
@@ -219,12 +239,13 @@ Use for: "Write reproduction code", "Replay with Python", "Replay with JS", "Res
 
 Process:
 
-1. Define method, URL, headers, cookies, query, and body.
-2. Separate fixed fields from dynamic fields.
-3. Reproduce dynamic parameter generation.
-4. Rebuild context; do not copy only one function.
-5. Build the smallest request. Avoid batch requests.
-6. Compare original and replayed requests: parameter format, length, timestamp precision, nonce, sign, response status, response keywords.
+1. Choose Mode 1, Mode 2, or Mode 3 before writing reproduction code.
+2. Define method, URL, headers, cookies, query, and body.
+3. Separate fixed fields from dynamic fields.
+4. Reproduce dynamic parameter generation using the smallest boundary for the chosen mode.
+5. Rebuild only the required context; do not copy unrelated globals, modules, or browser mocks.
+6. Build the smallest request. Avoid batch requests.
+7. Compare original and replayed requests: parameter format, length, timestamp precision, nonce, sign, response status, response keywords.
 
 Python requirements:
 
@@ -338,15 +359,16 @@ For complete analysis reports, include:
 2. Input materials.
 3. Analysis process.
 4. Key code locations.
-5. Parameter generation logic.
-6. Key/iv/salt sources.
-7. Algorithm judgment.
-8. Reproduction code or pseudocode.
-9. VM, anti-debugger, Electron, or remote-debugging result when relevant.
-10. Verification process.
-11. Conclusion.
-12. Risks and unknowns.
-13. Attachment text.
+5. Reproduction mode.
+6. Parameter generation logic.
+7. Key/iv/salt sources.
+8. Algorithm judgment.
+9. Reproduction code or pseudocode.
+10. VM, anti-debugger, Electron, or remote-debugging result when relevant.
+11. Verification process.
+12. Conclusion.
+13. Risks and unknowns.
+14. Attachment text.
 
 Attachment template:
 
@@ -354,6 +376,7 @@ Attachment template:
 [Key functions]
 [Call chain] entry -> middle function -> crypto function -> request send
 [Key parameters] name / source / generation method
+[Reproduction mode] in-site extraction / local Node service / pure algorithm port
 [Candidate key] key / iv / salt / source / confidence
 [Algorithm judgment] algorithm / library / evidence
 [Runtime context] window/document/navigator/localStorage/time/random/dependencies

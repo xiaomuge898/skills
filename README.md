@@ -97,6 +97,7 @@ skills/
 - 处理 VM/jsVMP 混淆、opcode、handler、调度器、常量池和目标参数路径。
 - 定位 `debugger`、反调试、DevTools 检测、快捷键拦截和相关副作用。
 - 辅助分析本地授权 Electron / 指纹浏览器的 `app.asar`、F12、`Ctrl+Shift+I`、DevTools 开关和 `remote-debugging-port` 来源。
+- 先选择逆向复现模式：站内执行扣代码、本地 Node 接口扣代码、Python/JavaScript/其它语言纯算移植。
 - `SKILL.md` 正文使用英文流程和约束，以提升 Codex 触发后的稳定执行；实际回答语言跟随用户输入。
 - 输出分析结论、证据链、复现思路、风险、不确定点和替代方案。
 
