@@ -2,10 +2,11 @@
 
 个人 Codex Skills 仓库，用来沉淀可复用的工作流、领域分析方法、项目理解模板和输出规范。
 
-本仓库的核心目标不是存放普通脚本，而是为 Codex 提供可触发、可复查、可维护的 `SKILL.md` 能力包。当前主要包含两类能力：
+本仓库的核心目标不是存放普通脚本，而是为 Codex 提供可触发、可复查、可维护的 `SKILL.md` 能力包。当前主要包含三类能力：
 
 - 授权 JavaScript 逆向分析与请求复现辅助。
 - 项目结构理解、架构梳理和项目记忆文档生成。
+- 未知密文、编码文本、Token 和不透明参数的自动分析与解码推测。
 
 ## 整理范围
 
@@ -23,6 +24,8 @@ skills/
 ├── README.md
 ├── LICENSE
 └── skills/
+    ├── cipher-auto-analyzer-898/
+    │   └── SKILL.md
     ├── project-memory-map-898/
     │   └── SKILL.md
     └── reverse-analysis-898/
@@ -36,6 +39,7 @@ skills/
 | `README.md` | 仓库说明文档，介绍项目定位、安装方式、使用方式、维护规范和验证清单。 |
 | `LICENSE` | MIT License。 |
 | `skills/` | 可安装 Skill 的根目录，每个子目录代表一个独立 Skill。 |
+| `skills/cipher-auto-analyzer-898/SKILL.md` | 密文/编码文本自动分析与解码推测 Skill。 |
 | `skills/project-memory-map-898/SKILL.md` | 项目理解与项目记忆图谱 Skill。 |
 | `skills/reverse-analysis-898/SKILL.md` | 授权 JavaScript 逆向分析 Skill。 |
 
@@ -43,10 +47,39 @@ skills/
 
 | Skill | 目录 | 适用场景 |
 |---|---|---|
+| `cipher-auto-analyzer-898` | `skills/cipher-auto-analyzer-898/` | 未知密文、编码文本、Token、不透明参数、Base64/Hex/URL/JWT/XOR 类数据的识别、解码尝试、置信度评分和可复现报告。 |
 | `reverse-analysis-898` | `skills/reverse-analysis-898/` | 授权 JS 逆向、协议逆向、前端加密、签名参数、token、密钥来源、VM/jsVMP、反调试、Electron asar、remote-debugging-port、请求复现。 |
 | `project-memory-map-898` | `skills/project-memory-map-898/` | 分析项目目录，生成项目结构图、模块图、依赖图、启动流程、数据流、API 流、爬虫/逆向流程图、项目记忆文档或机器可读项目地图。 |
 
 ## Skill 详情
+
+### cipher-auto-analyzer-898
+
+显示标题：`Cipher Auto Analyzer 898`
+
+用途：面向未知密文、编码文本、Token、不透明请求参数和多层编码样本的离线分析，帮助 Codex 先识别结构特征，再生成候选假设、尝试可逆解码、评分并归档完整过程。
+
+主要能力：
+
+- 识别 Base64、URL-safe Base64、Hex、URL encode、JWT、JSON、QueryString、Unicode 转义、简单 XOR、gzip/zlib 等常见外层结构。
+- 对每条解码路径记录成功/失败、证据、输出预览、拒绝原因和置信度。
+- 区分编码、压缩、哈希和加密，避免把 Base64 当成加密，避免把 hash 说成可解密。
+- 使用最大深度、最大尝试次数和输出预览长度限制，避免无限递归和盲目爆破。
+- 输出最佳猜测、验证依据、缺失材料、风险、替代方案和可复现步骤。
+
+适合这样提问：
+
+```text
+分析这个 token 可能是什么编码或加密方式，并尝试还原可读内容。
+```
+
+```text
+这个字符串像 Base64/JWT/Hex 吗？帮我逐层分析并给出报告。
+```
+
+```text
+这个接口参数 data 是一串乱码，先离线判断可能的编码层和下一步需要什么材料。
+```
 
 ### reverse-analysis-898
 
@@ -210,6 +243,7 @@ rg --files -g '!docs/**' -g '!skill_logs/**'
 ```text
 README.md
 LICENSE
+skills/cipher-auto-analyzer-898/SKILL.md
 skills/project-memory-map-898/SKILL.md
 skills/reverse-analysis-898/SKILL.md
 ```
