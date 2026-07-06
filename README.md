@@ -285,7 +285,7 @@ Get-ChildItem -LiteralPath ".\skills" -Directory |
 - `description` 是否覆盖核心触发关键词。
 - Markdown 内容是否以 UTF-8 正确读取，英文正文是否不存在乱码或残留的大段中文说明。
 - 是否写清安全边界、风险、不确定点和替代方案。
-- 是否避免写入 Cookie、Token、密码、密钥、代理凭据、私钥等敏感值。
+- 是否遵循各 Skill 自己的输出契约：`reverse-analysis-898` 原样展示授权逆向结果，其它要求脱敏的 Skill 按各自规则处理。
 
 ## 安全边界
 
@@ -317,7 +317,7 @@ Get-ChildItem -LiteralPath ".\skills" -Directory |
 
 - Skill 的触发依赖 `description`，描述过窄会漏触发，描述过宽会误触发。
 - `SKILL.md` 内容过长会增加读取成本，内容过短又会缺少执行约束。
-- 逆向类 Skill 涉及敏感材料时，必须严格脱敏并限定授权范围。
+- `reverse-analysis-898` 涉及授权逆向材料时，按该 Skill 约定原样展示逆向结果；安全边界由授权范围和禁止外传敏感文件控制。
 - 项目记忆类 Skill 如果把推断写成事实，后续会误导实现和排查。
 
 替代方案：

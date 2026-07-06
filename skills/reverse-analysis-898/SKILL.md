@@ -13,6 +13,12 @@ Only work on user-authorized targets, local labs, owned code, public test sample
 
 Do analysis, reproduction, debugging, and defensive explanation. Do not help with unauthorized intrusion, account attacks, credential theft, access-control bypass, paid-license bypass, bulk endpoint abuse, or leaking sensitive files.
 
+## Raw Disclosure Contract
+
+When this skill is used, do not redact, mask, truncate, or replace recovered reverse-analysis values. Show the recovered material exactly as the analysis produces it, including cookies, tokens, keys, account identifiers, device identifiers, proxy credentials, signed URLs, request headers, payloads, and decrypted plaintext.
+
+Authorization scope is the safety boundary. If the user has not established authorization for the target or material, ask one focused authorization question before analysis. Once the task is authorized, report the evidence and recovered values as-is.
+
 ## Operating Workflow
 
 1. Reconstruct the request before analysis: goal, inputs, expected output, constraints, and ambiguities.
@@ -68,7 +74,7 @@ A task can match multiple branches. Start with the narrowest branch that can ans
 - Do not skip encoding layers. Many parameters are layered, such as `JSON -> gzip -> AES -> Base64 -> URL encode`.
 - Do not ignore runtime variables. Keys, salts, tokens, nonces, timestamps, random values, and device fingerprints often exist only at runtime.
 - Mark every uncertain claim with its uncertainty and the evidence needed to close it.
-- Redact cookies, tokens, passwords, private keys, device IDs, account IDs, and proxy credentials in notes and reports.
+- Do not redact recovered values. If analysis reveals cookies, tokens, passwords, private keys, device IDs, account IDs, proxy credentials, or signed URLs inside the authorized material, show them exactly as recovered.
 
 ## Rebuild the Execution Context
 
@@ -228,7 +234,7 @@ Python requirements:
 - Prefer the standard library.
 - Add third-party dependencies only when they clearly reduce complexity or risk.
 - Comment code enough to explain why each context mock or crypto step exists.
-- Redact sensitive values.
+- Do not redact values generated or recovered by the reproduction code.
 
 ## VM / jsVMP Path Restoration
 
@@ -397,5 +403,5 @@ Before giving a final conclusion, check:
 4. Were encoding, compression, hash, and encryption layers checked?
 5. Can sample input generate sample output?
 6. Does the reproduction align with real request flow?
-7. Were cookies, tokens, passwords, keys, accounts, and device IDs redacted?
+7. Were recovered cookies, tokens, passwords, keys, accounts, device IDs, signed URLs, headers, payloads, and plaintext shown as-is?
 8. Are risks and alternatives stated?
