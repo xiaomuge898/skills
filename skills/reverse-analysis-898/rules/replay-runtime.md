@@ -31,6 +31,8 @@ When extracting code for protocol or frontend encryption analysis, restore the e
 
 For in-site extraction, the real page is the execution context. Keep extraction narrow and reuse the page's native globals instead of rebuilding them locally.
 
+For DOM/BOM/Navigator/Window, fingerprint API, descriptor/prototype, native `toString`, or Node/browser divergence issues, load `rules/js-runtime-environment-reconstruction.md` and use its gap triage before adding broad mocks.
+
 Rebuild in this order:
 
 1. Function context: target function, closure variables, module imports, webpack runtime, global aliases.

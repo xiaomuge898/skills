@@ -32,6 +32,7 @@ Load only the rule files needed for the current task:
 | Parameter generation, key/iv/salt, payload decrypt, algorithm ID | `rules/parameter-crypto.md` |
 | Unknown logic, unknown algorithm, uncertain parameter source, false leads | `rules/workflow-routing.md` plus the target branch rule |
 | Request replay, browser/runtime context, Python reproduction | `rules/replay-runtime.md` |
+| JS runtime environment reconstruction, Node/browser divergence, DOM/BOM/Navigator/Window/Canvas/WebGL/Audio/Crypto/Performance gaps | `rules/js-runtime-environment-reconstruction.md` plus `rules/replay-runtime.md` |
 | VM/jsVMP, AST recovery, anti-debugger, Electron asar, F12, remote debugging | `rules/vm-antidebug-electron.md` |
 | Final report, response format, pre-completion checks | `rules/report-contract.md` |
 
@@ -43,7 +44,7 @@ Load only the rule files needed for the current task:
 4. Build an evidence chain: code locations, call graph, inputs, return values, runtime variables, and request samples.
 5. If the logic is uncertain, switch to Hypothesis-Driven Validation before deep static reading.
 6. Prefer the smallest verifiable path. Restore only the target parameter path unless full deobfuscation is necessary.
-7. Rebuild only the execution context required by the chosen reproduction mode.
+7. Rebuild only the execution context required by the chosen reproduction mode; for browser-object gaps, use JS Runtime Environment Reconstruction.
 8. Verify by comparing sample input/output or original/replayed requests.
 9. Answer with solution, evidence, rationale, risks, verification, and alternatives.
 
@@ -88,7 +89,9 @@ Hypothesis validation record:
 | Identify crypto/hash/encoding library or algorithm | `rules/parameter-crypto.md` |
 | Unknown crypto, unknown parameter source, unclear obfuscated logic, or conflicting evidence | `rules/workflow-routing.md` plus the target branch rule |
 | Write JS/Python request replay code | `rules/replay-runtime.md` |
-| Analyze local/browser runtime divergence | `rules/replay-runtime.md` and `rules/field-notes.md` |
+| Analyze local/browser runtime divergence | `rules/js-runtime-environment-reconstruction.md` and `rules/replay-runtime.md` |
+| Diagnose missing browser environment in Node/local VM | `rules/js-runtime-environment-reconstruction.md` |
+| Reconstruct Window/Document/Navigator/Location/Storage/Canvas/WebGL/Audio/Crypto/Performance | `rules/js-runtime-environment-reconstruction.md` |
 | Analyze VM, jsVMP, opcode, bytecode, handler tables | `rules/vm-antidebug-electron.md` |
 | Handle obfuscated JS | `rules/vm-antidebug-electron.md` |
 | Remove or understand `debugger`, DevTools detection, anti-debugging | `rules/vm-antidebug-electron.md` |
