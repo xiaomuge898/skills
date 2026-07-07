@@ -1,5 +1,15 @@
 # Parameter And Crypto Rules
 
+Role: Main branch for parameter generation, key source analysis, payload decryption, and algorithm identification.
+
+Input: evidence inventory, selected reproduction mode, request samples, code locations, runtime values, plaintext/ciphertext pairs.
+
+Output: generation entry, call chain, participating fields, key/iv/salt source, algorithm evidence, reproduction path, verification result.
+
+May call support capabilities: `workflow-routing.md` for Hypothesis-Driven Validation, `js-obfuscation-ast-deobfuscation.md` for obfuscated code, `js-runtime-environment-reconstruction.md` for browser/runtime gaps, and `field-notes.md` for hard reverse drift patterns.
+
+Returns control to: `rules/orchestrator.md` for verification and trace-driven reporting.
+
 ## Parameter Generation
 
 Use for: "Where does this parameter come from?", "How is sign generated?", "How is token calculated?", "Restore request parameters."

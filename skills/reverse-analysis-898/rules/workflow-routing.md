@@ -1,16 +1,25 @@
 # Workflow And Routing Rules
 
+Role: evidence intake and initial target routing.
+
+Type: Support capability for `rules/orchestrator.md`, not the top-level execution engine.
+
+Input: user request, supplied materials, observed errors, request samples, runtime evidence.
+
+Output: material inventory, missing evidence, target classification, initial branch recommendation, hypothesis records when needed.
+
+Returns control to: `rules/orchestrator.md` and the active main branch.
+
 ## Operating Workflow
+
+Use this file for intake and routing. Use `orchestrator.md` for phase order, branch ownership, support-capability calls, verification gates, and report shape.
 
 1. Reconstruct the request: goal, inputs, expected output, constraints, and ambiguities.
 2. Inventory supplied materials and name missing evidence.
-3. Route to the smallest relevant branch and choose the reproduction mode before extracting code.
-4. Build an evidence chain: code locations, call graph, inputs, return values, runtime variables, and request samples.
+3. Classify the target output.
+4. Recommend the narrowest main branch.
 5. If evidence cannot determine the logic, enter Hypothesis-Driven Validation before deep static reading.
-6. Prefer the smallest verifiable path. Restore only the target parameter path unless full deobfuscation is necessary.
-7. Rebuild only the execution context required by the selected reproduction mode.
-8. Verify by comparing sample input/output or original/replayed requests.
-9. Answer with solution, evidence, rationale, risks, verification, and alternatives.
+6. Return the intake result to the orchestrator.
 
 ## Hypothesis-Driven Validation
 
@@ -55,6 +64,7 @@ Record every experiment in this shape:
 List what is present and what is missing:
 
 - JavaScript files, source maps, webpack chunks, HTML, workers, wasm.
+- Obfuscated JavaScript fingerprints: string arrays, decoder wrappers, object proxy tables, computed properties, `while/switch` dispatchers, `eval`/`Function`, anti-debugger fragments, AST transform scripts, and recovered output samples.
 - Network captures, HAR, curl, URL, method, headers, cookies, query, body.
 - Plaintext samples, ciphertext samples, response samples, error messages.
 - Console logs, breakpoint screenshots, runtime variable snapshots.
@@ -82,6 +92,8 @@ Recommended next step:
 | Unknown crypto, unknown parameter source, unclear obfuscated logic, or conflicting evidence | Hypothesis-Driven Validation, then the narrow target branch |
 | Write JS/Python request replay code | Request replay |
 | Analyze VM, jsVMP, opcode, bytecode, handler tables | VM path restoration |
+| Recognize JavaScript Obfuscator / obfuscator.io code, string arrays, object proxies, computed properties, dead code, or control-flow flattening | JavaScript obfuscation recognition and AST deobfuscation |
+| Build or review AST-based JavaScript deobfuscation passes, visitors, transformers, or recovery order | AST based JavaScript deobfuscation |
 | Remove or understand `debugger`, DevTools detection, anti-debugging | Anti-debugger analysis |
 | Debug Electron asar, DevTools, F12, Ctrl+Shift+I | Electron debugging switch |
 | Locate or enable `remote-debugging-port` | Remote debugging parameter discovery |

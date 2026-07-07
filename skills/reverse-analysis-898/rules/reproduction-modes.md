@@ -1,5 +1,13 @@
 # Reverse Reproduction Modes
 
+Role: mode decision gate for `rules/orchestrator.md`.
+
+Input: target output, evidence inventory, expected deliverable, runtime dependency evidence.
+
+Output: selected reproduction mode, extraction boundary, deliverable shape, verification method.
+
+Returns control to: `rules/orchestrator.md` before main branch selection.
+
 Choose the final execution mode before extracting code. Do not default to full browser-environment restoration when the requested deliverable can be verified with a smaller boundary.
 
 | Mode | Use when | Extraction boundary | Default deliverable | Verification |

@@ -1,26 +1,39 @@
 # Report And Completion Contract
 
-## Complete Report Contract
+Role: completion gate and trace-driven report contract.
 
-For complete analysis reports, include:
+Input: orchestrator execution trace, active main branch result, support capability records, verification evidence, risks, unknowns.
+
+Output: final response structure and pre-completion reverse verification result.
+
+Returns control to: final user response.
+
+## Trace-Driven Report Contract
+
+For complete analysis reports, always include:
 
 1. Task goal.
 2. Input materials.
 3. Analysis process.
 4. Key code locations.
 5. Reproduction mode.
-6. Parameter generation logic.
-7. Key/iv/salt sources.
-8. Algorithm judgment.
-9. Experience notes applied when relevant.
-10. Reproduction code or pseudocode.
-11. VM, anti-debugger, Electron, or remote-debugging result when relevant.
-12. Runtime environment reconstruction result when Node/browser or DOM/BOM/fingerprint gaps were involved.
-13. Hypothesis validation records when uncertain logic, algorithm, parameter source, obfuscation, or runtime dependency was involved.
-14. Verification process.
-15. Conclusion.
-16. Risks and unknowns.
-17. Attachment text.
+6. Active main branch.
+7. Verification process.
+8. Conclusion.
+9. Risks and unknowns.
+
+Include these conditional sections only when the execution trace used them:
+
+1. Parameter generation logic.
+2. Key/iv/salt sources.
+3. Algorithm judgment.
+4. Experience notes.
+5. Reproduction code or pseudocode.
+6. VM, anti-debugger, Electron, or remote-debugging result.
+7. Runtime environment reconstruction result.
+8. JavaScript obfuscation recognition and AST deobfuscation result.
+9. Hypothesis validation records.
+10. Attachment text.
 
 Attachment template:
 
@@ -35,6 +48,8 @@ Attachment template:
 [Hypothesis validation] hypothesis / method / expected / observed / judgment / next direction
 [Runtime context] window/document/navigator/localStorage/time/random/dependencies
 [Runtime environment reconstruction] gap / classification / browser checkpoint / local checkpoint / patch / residual risk
+[JS obfuscation] fingerprints / obfuscation type / chosen method / static-vs-dynamic-vs-browser decision / transform order / changed counts / residual obfuscation
+[AST deobfuscation] parser options / visitor passes / node replacements / deleted nodes / reparse checkpoints / generator options / verification evidence
 [VM/jsVMP] entry / dispatcher / opcode / handler / target parameter path
 [debugger/anti-debugger] trigger / method / handling plan / verification
 [Electron asar] asar path / entry file / modification / backup
@@ -85,5 +100,6 @@ Before giving a final conclusion, check:
 8. Can sample input generate sample output?
 9. Does the reproduction align with real request flow?
 10. Were relevant field notes considered: public helper vs wrapper, length drift, stale runtime, URL exactness, browser parity, and false hypotheses?
-11. Were recovered cookies, tokens, passwords, keys, accounts, device IDs, signed URLs, seed material, headers, payloads, and plaintext shown as-is?
-12. Are risks and alternatives stated?
+11. If JavaScript deobfuscation was involved, were the obfuscation fingerprints, chosen recovery method, AST transform order, and static/dynamic/browser decision recorded?
+12. Were recovered cookies, tokens, passwords, keys, accounts, device IDs, signed URLs, seed material, headers, payloads, and plaintext shown as-is?
+13. Are risks and alternatives stated?

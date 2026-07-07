@@ -34,6 +34,9 @@ skills/
     │   ├── SKILL.md
     │   └── rules/
     │       ├── field-notes.md
+    │       ├── js-obfuscation-ast-deobfuscation.md
+    │       ├── js-runtime-environment-reconstruction.md
+    │       ├── orchestrator.md
     │       ├── parameter-crypto.md
     │       ├── replay-runtime.md
     │       ├── report-contract.md
@@ -84,7 +87,7 @@ skills/
 | `skills/cipher-auto-analyzer-898/SKILL.md` | 密文/编码文本自动分析与解码推测 Skill。 |
 | `skills/project-memory-map-898/SKILL.md` | 项目理解与项目记忆图谱 Skill。 |
 | `skills/reverse-analysis-898/SKILL.md` | 授权 JavaScript 逆向分析 Skill。 |
-| `skills/reverse-analysis-898/rules/` | 授权逆向分析的范围证据、工作流路由、复现模式、参数加密、请求复现、VM/反调试/Electron 和报告契约规则。 |
+| `skills/reverse-analysis-898/rules/` | 授权逆向分析的范围证据、总控编排、工作流路由、复现模式、参数加密、请求复现、AST 去混淆、运行时重建、VM/反调试/Electron 和报告契约规则。 |
 | `skills/request-analyzer-898/SKILL.md` | HTTP 请求分析与请求复现方案设计 Skill。 |
 | `skills/request-analyzer-898/rules/` | 输入解析、参数分类、失败诊断、浏览器依赖、网络稳定性和 Python 项目生成规则。 |
 | `skills/request-analyzer-898/templates/` | 请求分析报告和用户回答格式模板。 |
@@ -149,7 +152,7 @@ skills/
 - 定位 `debugger`、反调试、DevTools 检测、快捷键拦截和相关副作用。
 - 辅助分析本地授权 Electron / 指纹浏览器的 `app.asar`、F12、`Ctrl+Shift+I`、DevTools 开关和 `remote-debugging-port` 来源。
 - 先选择逆向复现模式：站内执行扣代码、本地 Node 接口扣代码、Python/JavaScript/其它语言纯算移植。
-- `SKILL.md` 保留核心契约和路由，详细规则拆分到 `rules/`，按任务只读取需要的规范，降低上下文占用。
+- `SKILL.md` 保留核心契约和总控入口，`rules/orchestrator.md` 负责阶段顺序、主分支选择、支撑能力调用、验证收口和轨迹驱动报告。
 - 拆分后的 `rules/` 保留原有功能和契约：授权范围、Raw Disclosure Contract、最小工作流、报告格式和最终验证清单不私自收窄。
 - `SKILL.md` 和规则正文使用英文流程和约束，以提升 Codex 触发后的稳定执行；实际回答语言跟随用户输入。
 - 输出分析结论、证据链、复现思路、风险、不确定点和替代方案。
@@ -369,9 +372,12 @@ skills/cipher-auto-analyzer-898/SKILL.md
 skills/project-memory-map-898/SKILL.md
 skills/reverse-analysis-898/SKILL.md
 skills/reverse-analysis-898/rules/scope-and-evidence.md
+skills/reverse-analysis-898/rules/orchestrator.md
 skills/reverse-analysis-898/rules/workflow-routing.md
 skills/reverse-analysis-898/rules/reproduction-modes.md
 skills/reverse-analysis-898/rules/field-notes.md
+skills/reverse-analysis-898/rules/js-obfuscation-ast-deobfuscation.md
+skills/reverse-analysis-898/rules/js-runtime-environment-reconstruction.md
 skills/reverse-analysis-898/rules/parameter-crypto.md
 skills/reverse-analysis-898/rules/replay-runtime.md
 skills/reverse-analysis-898/rules/vm-antidebug-electron.md

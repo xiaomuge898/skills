@@ -1,17 +1,27 @@
 # VM, Obfuscation, Anti-Debugger, Electron Rules
 
+Role: Main branch group for VM/jsVMP path restoration, anti-debugger analysis, Electron asar/DevTools work, and remote-debugging-port discovery.
+
+Input: evidence inventory, selected reproduction mode, obfuscation fingerprints, runtime symptoms, Electron paths, process or shortcut evidence.
+
+Output: VM path, anti-debugger trigger, Electron modification point, remote-debugging source, verification result, residual risks.
+
+May call support capabilities: `js-obfuscation-ast-deobfuscation.md` before VM is proven, `js-runtime-environment-reconstruction.md` for browser/runtime gaps, and `workflow-routing.md` for Hypothesis-Driven Validation.
+
+Returns control to: `rules/orchestrator.md` for verification and trace-driven reporting.
+
 ## VM / jsVMP Path Restoration
 
 Use for: "Analyze VM", "Analyze jsVMP", "Restore opcode", "Restore bytecode."
 
-If obfuscation is encountered, try using AST to recover the obfuscated code.
+If generic JavaScript Obfuscator / obfuscator.io patterns are encountered before a real VM is proven, load `js-obfuscation-ast-deobfuscation.md` first. Return to this rule only when bytecode, opcode, handler table, stack/register, or VM dispatch evidence exists.
 
 Process:
 
 1. Confirm whether it is actually VM/jsVMP: large arrays, bytecode, constant pool, `while/switch` dispatch, opcode, pc/sp/stack/context/register, handler table.
 2. Locate VM entry: bytecode source, constant pool source, external parameter entry, return-value flow.
 3. Map opcode to handlers, stack/register operations, jumps, calls, property access, string decoding.
-4. If obfuscation blocks static reading, use AST restoration for constant strings, control-flow flattening, and wrapper windows before attempting a full rewrite.
+4. If obfuscation blocks static reading, use the JavaScript obfuscation and AST deobfuscation rules for constant strings, object proxies, computed properties, control-flow flattening, and wrapper windows before attempting VM mapping.
 5. Extract only the shortest path related to the target parameter and mark irrelevant branches.
 6. Instrument dynamically when needed: print opcode, handler inputs/returns, stack changes, variables before/after target generation.
 
@@ -22,6 +32,8 @@ If the VM structure is unclear, use Hypothesis-Driven Validation before mapping 
 - Reject a VM hypothesis when opcode movement, stack/register changes, or target output sensitivity contradicts the expected behavior.
 
 ## AST Recovery Rules
+
+For non-VM JavaScript Obfuscator / AST deobfuscation work, use `js-obfuscation-ast-deobfuscation.md`. The rules below are only the VM-adjacent subset.
 
 - Preserve the original obfuscated file.
 - Build a call graph from the target output backward.

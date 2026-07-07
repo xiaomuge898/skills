@@ -21,32 +21,40 @@ Authorization scope is the safety boundary. If the user has not established auth
 
 ## Rule Loading
 
-Load only the rule files needed for the current task:
+Load `rules/scope-and-evidence.md` first, then `rules/orchestrator.md`. The orchestrator decides which branch and support rules are needed. Do not treat the rule files as a flat checklist.
 
 | Situation | Required rule |
 |---|---|
 | Scope, evidence handling, raw disclosure | `rules/scope-and-evidence.md` |
-| Material inventory, task routing, operating workflow | `rules/workflow-routing.md` |
+| Phase ordering, branch ownership, support-capability calls, verification gates | `rules/orchestrator.md` |
+| Material inventory and initial target classification | `rules/workflow-routing.md` |
 | In-site extraction, local Node service, pure algorithm port | `rules/reproduction-modes.md` |
 | Hard-earned X-Bogus/X-Gnarly/BSID style lessons | `rules/field-notes.md` |
 | Parameter generation, key/iv/salt, payload decrypt, algorithm ID | `rules/parameter-crypto.md` |
 | Unknown logic, unknown algorithm, uncertain parameter source, false leads | `rules/workflow-routing.md` plus the target branch rule |
 | Request replay, browser/runtime context, Python reproduction | `rules/replay-runtime.md` |
 | JS runtime environment reconstruction, Node/browser divergence, DOM/BOM/Navigator/Window/Canvas/WebGL/Audio/Crypto/Performance gaps | `rules/js-runtime-environment-reconstruction.md` plus `rules/replay-runtime.md` |
+| JavaScript Obfuscator, obfuscator.io, string arrays, object proxies, control-flow flattening, dead code, AST deobfuscation | `rules/js-obfuscation-ast-deobfuscation.md` |
 | VM/jsVMP, AST recovery, anti-debugger, Electron asar, F12, remote debugging | `rules/vm-antidebug-electron.md` |
 | Final report, response format, pre-completion checks | `rules/report-contract.md` |
 
 ## Minimal Workflow
 
-1. Reconstruct the request before analysis: goal, inputs, expected output, constraints, and ambiguities.
-2. Inventory the supplied materials and name missing evidence.
-3. Route the task to the smallest relevant branch and choose the reproduction mode before extracting code.
-4. Build an evidence chain: code locations, call graph, inputs, return values, runtime variables, and request samples.
-5. If the logic is uncertain, switch to Hypothesis-Driven Validation before deep static reading.
-6. Prefer the smallest verifiable path. Restore only the target parameter path unless full deobfuscation is necessary.
-7. Rebuild only the execution context required by the chosen reproduction mode; for browser-object gaps, use JS Runtime Environment Reconstruction.
-8. Verify by comparing sample input/output or original/replayed requests.
-9. Answer with solution, evidence, rationale, risks, verification, and alternatives.
+Follow `rules/orchestrator.md` as the execution controller:
+
+```text
+Scope gate
+ -> Evidence intake
+ -> Target definition
+ -> Reproduction mode decision
+ -> Main branch selection
+ -> Support capability calls as needed
+ -> Hypothesis validation loop when evidence is uncertain
+ -> Verification
+ -> Trace-driven report
+```
+
+Prefer the smallest verifiable path. Restore only the target path unless full deobfuscation or broader runtime reconstruction is proven necessary.
 
 ## Hypothesis-Driven Validation
 
@@ -81,6 +89,8 @@ Hypothesis validation record:
 
 ## Quick Routing
 
+Use this table only after the orchestrator has reconstructed the request, inventoried evidence, and selected a reproduction mode.
+
 | User intent | Start with |
 |---|---|
 | Find where `sign`, `token`, `data`, `payload`, or `X-Bogus` comes from | `rules/parameter-crypto.md` |
@@ -92,6 +102,9 @@ Hypothesis validation record:
 | Analyze local/browser runtime divergence | `rules/js-runtime-environment-reconstruction.md` and `rules/replay-runtime.md` |
 | Diagnose missing browser environment in Node/local VM | `rules/js-runtime-environment-reconstruction.md` |
 | Reconstruct Window/Document/Navigator/Location/Storage/Canvas/WebGL/Audio/Crypto/Performance | `rules/js-runtime-environment-reconstruction.md` |
+| Recognize JavaScript Obfuscator / obfuscator.io patterns | `rules/js-obfuscation-ast-deobfuscation.md` |
+| Restore string arrays, object proxy wrappers, computed properties, dead code, or control-flow flattening | `rules/js-obfuscation-ast-deobfuscation.md` |
+| Build an AST-based JavaScript deobfuscation pipeline | `rules/js-obfuscation-ast-deobfuscation.md` |
 | Analyze VM, jsVMP, opcode, bytecode, handler tables | `rules/vm-antidebug-electron.md` |
 | Handle obfuscated JS | `rules/vm-antidebug-electron.md` |
 | Remove or understand `debugger`, DevTools detection, anti-debugging | `rules/vm-antidebug-electron.md` |

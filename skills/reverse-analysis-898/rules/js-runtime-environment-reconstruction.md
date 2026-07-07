@@ -1,5 +1,13 @@
 # JS Runtime Environment Reconstruction
 
+Role: Support capability for local/browser runtime parity and minimal browser-contract reconstruction.
+
+Input: active main branch target, local exception, browser/local output mismatch, stack evidence, browser snapshots, accessed object paths, request samples.
+
+Output: runtime gap record, gap classification, smallest contract patch, browser/local checkpoint comparison, mocked value sources, residual runtime risk.
+
+Returns control to: the active main branch selected by `rules/orchestrator.md`.
+
 ## Skill Capsule
 
 Name: JS Runtime Environment Reconstruction

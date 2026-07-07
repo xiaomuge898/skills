@@ -1,5 +1,15 @@
 # Request Replay And Runtime Rules
 
+Role: Main branch for request replay and reproduction-code delivery.
+
+Input: selected reproduction mode, original request, generated dynamic fields, runtime dependencies, cookies/headers/query/body evidence.
+
+Output: replay boundary, request construction rules, dynamic parameter integration, code or pseudocode, request comparison, replay verification.
+
+May call support capabilities: `js-runtime-environment-reconstruction.md` for browser-object gaps, `parameter-crypto.md` for missing generators, `workflow-routing.md` for Hypothesis-Driven Validation, and `field-notes.md` for URL fidelity or stale runtime risks.
+
+Returns control to: `rules/orchestrator.md` for verification and trace-driven reporting.
+
 ## Request Replay
 
 Use for: "Write reproduction code", "Replay with Python", "Replay with JS", "Restore the API request."
