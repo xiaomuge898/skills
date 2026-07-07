@@ -1,6 +1,6 @@
 ---
 name: reverse-analysis-898
-description: Use when analyzing authorized JavaScript reverse engineering, protocol reverse analysis, frontend encryption, request signing, token/sign/X-Bogus parameters, key/iv/salt discovery, CryptoJS/WebCrypto/node:crypto usage, encoding/hash/HMAC/AES/RSA/SM2/SM4 identification, VM/jsVMP obfuscation, anti-debugger logic, browser runtime tracing, Electron asar DevTools/F12 debugging, remote-debugging-port discovery, request replay, or crawler parameter restoration.
+description: Use when analyzing authorized JavaScript reverse engineering, protocol reverse analysis, frontend encryption, request signing, token/sign/X-Bogus/X-Gnarly/X-Tts-Oec-Bsid parameters, key/iv/salt discovery, CryptoJS/WebCrypto/node:crypto usage, encoding/hash/HMAC/AES/RSA/SM2/SM4 identification, VM/jsVMP obfuscation, anti-debugger logic, browser runtime tracing, Electron asar DevTools/F12 debugging, remote-debugging-port discovery, request replay, or crawler parameter restoration.
 ---
 
 # NX JS Reverse Analysis
@@ -15,7 +15,7 @@ Do analysis, reproduction, debugging, and defensive explanation. Do not help wit
 
 ## Raw Disclosure Contract
 
-When this skill is used, do not redact, mask, truncate, or replace recovered reverse-analysis values. Show the recovered material exactly as the analysis produces it, including cookies, tokens, keys, account identifiers, device identifiers, proxy credentials, signed URLs, request headers, payloads, and decrypted plaintext.
+When this skill is used for authorized reverse analysis, reverse evidence has priority over privacy masking. Do not redact, mask, truncate, or replace recovered reverse-analysis values. Show the recovered material exactly as the analysis produces it, including cookies, tokens, keys, account identifiers, device identifiers, proxy credentials, signed URLs, request headers, payloads, decrypted plaintext, runtime seed material, and generated signature parameters.
 
 Authorization scope is the safety boundary. If the user has not established authorization for the target or material, ask one focused authorization question before analysis. Once the task is authorized, report the evidence and recovered values as-is.
 
@@ -84,6 +84,24 @@ Mode rules:
 - If the logic is pure math, encoding, hashing, signing, encryption, or decryption and can be proven with samples, use Mode 3. Prefer a clean pure implementation over executing copied browser code.
 - If the correct mode is unclear, state the competing modes and the evidence needed to choose one.
 
+## Field Notes From Hard Reverse Work
+
+These are experience-derived rules from successful and failed request-signing restoration. Use them as judgement prompts, not as a fixed template.
+
+- A public signing API may be a decoy or partial path. In one `X-Bogus` case, the public `frontierSign()` returned a short value while the real request wrapper generated the long request value and adjacent parameters. First prove whether the target request uses a public helper, an XHR/fetch wrapper, an interceptor, or a VM path.
+- Multiple parameters that appear together should be treated as one runtime event until evidence proves otherwise. If `X-Bogus`, `X-Gnarly`, `X-Tts-Oec-Bsid`, `msToken`, body hash, and cookies are produced from different snapshots, replay can fail even when each individual value "looks right".
+- Length drift is a real clue, not a cosmetic difference. A local signature length that differs from page runtime length usually means a branch, seed, padding, runtime config, or environment probe diverged.
+- A successful local VM run is not automatically a pure algorithm restoration. If it executes copied SDK, VM bytecode, unisec runtime, wasm, or page-derived seed, label it honestly as local runtime execution.
+- CDP is useful as an oscilloscope: capture runtime variables, compare page and local VM checkpoints, export authorized seed material, or abort a wrapper request before it reaches the network. It is not proof of pure local restoration by itself.
+- Do not keep stale CDP defaults in code paths that are supposed to be local. A stale `DEFAULT_CDP_WS`, `CDP_WS`, or hidden `--seed-from-cdp` branch can make a "local" result secretly browser-dependent.
+- Signed URLs are fragile byte strings. Re-parsing and rebuilding them after signing can corrupt `+`, `/`, `=`, `%`, custom alphabets, ordering, or empty values. If replay suddenly returns a risk code after an apparently valid signature, compare the exact pre/post signing URL string.
+- Browser parity bugs are often tiny and decisive. Examples: desktop Chrome throws `NotSupportedError` for `document.createEvent('TouchEvent')`; missing Canvas 2D drawing APIs can stop runtime bootstrap; exposing Node globals can choose the wrong branch; adding a plausible `navigator.connection` can be worse than leaving it absent.
+- Do not add browser mocks by guessing. Add a field only when static code or runtime tracing proves it is read, then compare page and local values at the nearest internal checkpoint.
+- A response with HTTP 200 can still be a failed replay. Treat business code, risk code, empty data, slider state, and response keywords as verification evidence.
+- When a false hypothesis appears, keep it as a rule. Example: overriding a saved runtime context with a newer cookie value can break signing; not every "newer" value belongs inside every seed or closure.
+- When a working scheme depends on a local seed package, record how to refresh it and what script consumes it, but keep the signer boundary clean. Seed export and signing are different jobs.
+- For authorized reverse tasks, raw evidence is more important than privacy cleanup. Preserve and show exact recovered values when they are needed to prove the chain.
+
 ## Evidence-First Rules
 
 - Do not say "looks like AES" or "probably MD5" without evidence. State the code location, input/output shape, function arguments, and confidence.
@@ -91,7 +109,7 @@ Mode rules:
 - Do not skip encoding layers. Many parameters are layered, such as `JSON -> gzip -> AES -> Base64 -> URL encode`.
 - Do not ignore runtime variables. Keys, salts, tokens, nonces, timestamps, random values, and device fingerprints often exist only at runtime.
 - Mark every uncertain claim with its uncertainty and the evidence needed to close it.
-- Do not redact recovered values. If analysis reveals cookies, tokens, passwords, private keys, device IDs, account IDs, proxy credentials, or signed URLs inside the authorized material, show them exactly as recovered.
+- Do not redact recovered values. If analysis reveals cookies, tokens, passwords, private keys, device IDs, account IDs, proxy credentials, signed URLs, seed material, headers, payloads, or plaintext inside the authorized material, show them exactly as recovered.
 
 ## Rebuild the Execution Context
 
@@ -122,9 +140,10 @@ Process:
 3. Find assignment points, generator functions, callers, and return-value flow.
 4. Identify participating fields: path, query, body, cookies, headers, user-agent, timestamp, nonce, device fingerprint, server return value, fixed salt.
 5. Restore concatenation order, sorting, case normalization, separators, empty-value handling.
-6. Restore encoding, compression, hash, HMAC, encryption, Base64, and URL encoding layers.
-7. Rebuild the execution context and reproduce the generator.
-8. Compare with the original request: format, length, timestamp precision, nonce shape, signature output, response status, and response keywords.
+6. If several parameters appear in the same protected request, first decide whether they are one runtime event or independent generators.
+7. Restore encoding, compression, hash, HMAC, encryption, Base64, and URL encoding layers.
+8. Rebuild the execution context and reproduce the generator.
+9. Compare with the original request: format, length, timestamp precision, nonce shape, signature output, response status, response code, and response keywords.
 
 Output:
 
@@ -243,9 +262,10 @@ Process:
 2. Define method, URL, headers, cookies, query, and body.
 3. Separate fixed fields from dynamic fields.
 4. Reproduce dynamic parameter generation using the smallest boundary for the chosen mode.
-5. Rebuild only the required context; do not copy unrelated globals, modules, or browser mocks.
-6. Build the smallest request. Avoid batch requests.
-7. Compare original and replayed requests: parameter format, length, timestamp precision, nonce, sign, response status, response keywords.
+5. Preserve the signed URL exactly after signing; do not rebuild signed query strings unless the signing algorithm requires it.
+6. Rebuild only the required context; do not copy unrelated globals, modules, or browser mocks.
+7. Build the smallest request. Avoid batch requests.
+8. Compare original and replayed requests: parameter format, length, timestamp precision, nonce, sign, response status, response code, and response keywords.
 
 Python requirements:
 
@@ -268,8 +288,9 @@ Process:
 1. Confirm whether it is actually VM/jsVMP: large arrays, bytecode, constant pool, `while/switch` dispatch, opcode, pc/sp/stack/context/register, handler table.
 2. Locate VM entry: bytecode source, constant pool source, external parameter entry, return-value flow.
 3. Map opcode to handlers, stack/register operations, jumps, calls, property access, string decoding.
-4. Extract only the shortest path related to the target parameter and mark irrelevant branches.
-5. Instrument dynamically when needed: print opcode, handler inputs/returns, stack changes, variables before/after target generation.
+4. If obfuscation blocks static reading, use AST restoration for constant strings, control-flow flattening, and wrapper windows before attempting a full rewrite.
+5. Extract only the shortest path related to the target parameter and mark irrelevant branches.
+6. Instrument dynamically when needed: print opcode, handler inputs/returns, stack changes, variables before/after target generation.
 
 Output:
 
@@ -365,12 +386,13 @@ For complete analysis reports, include:
 6. Parameter generation logic.
 7. Key/iv/salt sources.
 8. Algorithm judgment.
-9. Reproduction code or pseudocode.
-10. VM, anti-debugger, Electron, or remote-debugging result when relevant.
-11. Verification process.
-12. Conclusion.
-13. Risks and unknowns.
-14. Attachment text.
+9. Experience notes applied when relevant.
+10. Reproduction code or pseudocode.
+11. VM, anti-debugger, Electron, or remote-debugging result when relevant.
+12. Verification process.
+13. Conclusion.
+14. Risks and unknowns.
+15. Attachment text.
 
 Attachment template:
 
@@ -379,6 +401,7 @@ Attachment template:
 [Call chain] entry -> middle function -> crypto function -> request send
 [Key parameters] name / source / generation method
 [Reproduction mode] in-site extraction / local Node service / pure algorithm port
+[Experience notes] branch drift / stale runtime / URL fidelity / browser parity / false hypotheses
 [Candidate key] key / iv / salt / source / confidence
 [Algorithm judgment] algorithm / library / evidence
 [Runtime context] window/document/navigator/localStorage/time/random/dependencies
@@ -409,7 +432,7 @@ Code locations, call chain, sample comparison, runtime variables.
 Data flow, algorithm evidence, context dependencies.
 
 [Risks and unknowns]
-Authorization, freshness, environment differences, missing materials, sensitive-data risk.
+Authorization, freshness, environment differences, and missing materials.
 
 [Verification]
 Commands, samples, request comparison, or why verification was not possible.
@@ -428,5 +451,6 @@ Before giving a final conclusion, check:
 4. Were encoding, compression, hash, and encryption layers checked?
 5. Can sample input generate sample output?
 6. Does the reproduction align with real request flow?
-7. Were recovered cookies, tokens, passwords, keys, accounts, device IDs, signed URLs, headers, payloads, and plaintext shown as-is?
-8. Are risks and alternatives stated?
+7. Were relevant field notes considered: public helper vs wrapper, length drift, stale runtime, URL exactness, browser parity, and false hypotheses?
+8. Were recovered cookies, tokens, passwords, keys, accounts, device IDs, signed URLs, seed material, headers, payloads, and plaintext shown as-is?
+9. Are risks and alternatives stated?
