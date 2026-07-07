@@ -16,6 +16,12 @@ Process:
 8. Rebuild the required execution context and reproduce the generator.
 9. Compare with the original request: format, length, timestamp precision, nonce shape, signature output, response status, response code, and response keywords.
 
+If the participating fields or generation mode are uncertain, stop broad static reading and run Hypothesis-Driven Validation:
+
+- Hypothesis examples: query/body concat, sorted keys, fixed salt, timestamp precision, random nonce, cookie/session field, localStorage seed, device fingerprint, server-issued token, hash/HMAC/encryption wrapper.
+- Minimal experiments: freeze time, freeze random, replace one request field, remove one header/cookie, hook the generator input, log pre-hash string, replay with one changed variable, or compare two requests that differ by one input.
+- Reject any hypothesis whose output length, charset, timestamp behavior, field sensitivity, or replay result contradicts the expectation.
+
 Output:
 
 ```text
@@ -45,6 +51,8 @@ Process:
 5. Prove it enters an encryption/decryption function as `key`, `iv`, `salt`, `message`, or `password`.
 6. Verify with sample input/output. Never call a string a key just because it looks like one.
 
+When multiple candidate keys, IVs, salts, or passwords exist, validate them as competing hypotheses. The minimum acceptable proof is evidence that the candidate reaches the crypto call and reproduces or changes the sample output as expected.
+
 ## Payload Decryption
 
 Use for: "Decrypt this parameter", "Restore payload", "What is inside data?", "Open this ciphertext."
@@ -57,6 +65,16 @@ Process:
 4. Confirm `key`, `iv`, `mode`, `padding`, AAD/tag for GCM-like flows.
 5. Restore the decryption flow and record the exact failure point if it does not close.
 6. Verify with a sample round trip.
+
+If the algorithm is unknown, test hypotheses from cheap to expensive:
+
+1. Outer encoding and compression: URL encode, Base64, Hex, JSON stringify, gzip/zlib, protobuf-like framing.
+2. Hash/signature shapes: MD5/SHA/HMAC length and charset checks.
+3. Symmetric crypto candidates: AES/DES/3DES/SM4 mode, padding, IV, and tag behavior.
+4. Asymmetric crypto candidates: RSA/SM2 key markers, ciphertext block length, public-key call sites.
+5. Custom logic: XOR, rotation, bit operations, table substitution, checksum, or VM-generated transform.
+
+For each candidate, record the hypothesis, minimal verification experiment, expected result, observed result, judgment, and next reasoning direction.
 
 ## Library And Algorithm Identification
 
@@ -84,3 +102,5 @@ Common features:
 - SM2/SM3/SM4: often appears in national-crypto libraries or names.
 
 Always report evidence, input structure, output features, whether the algorithm is standard or custom, and what still needs verification.
+
+When evidence is ambiguous, do not name a final algorithm from appearance alone. Produce a ranked hypothesis list and validate each candidate with the smallest input/output or runtime experiment available.

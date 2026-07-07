@@ -30,6 +30,7 @@ Load only the rule files needed for the current task:
 | In-site extraction, local Node service, pure algorithm port | `rules/reproduction-modes.md` |
 | Hard-earned X-Bogus/X-Gnarly/BSID style lessons | `rules/field-notes.md` |
 | Parameter generation, key/iv/salt, payload decrypt, algorithm ID | `rules/parameter-crypto.md` |
+| Unknown logic, unknown algorithm, uncertain parameter source, false leads | `rules/workflow-routing.md` plus the target branch rule |
 | Request replay, browser/runtime context, Python reproduction | `rules/replay-runtime.md` |
 | VM/jsVMP, AST recovery, anti-debugger, Electron asar, F12, remote debugging | `rules/vm-antidebug-electron.md` |
 | Final report, response format, pre-completion checks | `rules/report-contract.md` |
@@ -40,10 +41,42 @@ Load only the rule files needed for the current task:
 2. Inventory the supplied materials and name missing evidence.
 3. Route the task to the smallest relevant branch and choose the reproduction mode before extracting code.
 4. Build an evidence chain: code locations, call graph, inputs, return values, runtime variables, and request samples.
-5. Prefer the smallest verifiable path. Restore only the target parameter path unless full deobfuscation is necessary.
-6. Rebuild only the execution context required by the chosen reproduction mode.
-7. Verify by comparing sample input/output or original/replayed requests.
-8. Answer with solution, evidence, rationale, risks, verification, and alternatives.
+5. If the logic is uncertain, switch to Hypothesis-Driven Validation before deep static reading.
+6. Prefer the smallest verifiable path. Restore only the target parameter path unless full deobfuscation is necessary.
+7. Rebuild only the execution context required by the chosen reproduction mode.
+8. Verify by comparing sample input/output or original/replayed requests.
+9. Answer with solution, evidence, rationale, risks, verification, and alternatives.
+
+## Hypothesis-Driven Validation
+
+Use this mode whenever the code logic, crypto algorithm, parameter source, obfuscation structure, runtime dependency, or generated value cannot be determined confidently from current evidence.
+
+Core loop:
+
+```text
+Observe -> propose hypotheses -> run minimal verification experiment -> judge result -> revise hypothesis -> continue
+```
+
+Rules:
+
+1. Do not wait for full static understanding before acting. Use runtime evidence and input/output comparison to reduce the search space.
+2. Generate multiple plausible hypotheses from the current evidence: AES/RSA/Base64/XOR/custom bit operations, concat/sort/sign/hash, timestamp/random/device fingerprint/server seed, environment checks, VM dispatch, dynamic code generation.
+3. For each hypothesis, design the smallest experiment that can falsify it: controlled input, one-variable change, hook, breakpoint, monkey patch, crypto wrapper, request replay diff, or before/after payload comparison.
+4. Record the expected result before running the experiment.
+5. If the observed result does not match the expectation, explain the difference, reject the hypothesis, and move to the next candidate instead of deepening the wrong branch.
+6. Keep the active reasoning path current. Promote only hypotheses supported by code evidence plus runtime or sample comparison.
+
+Hypothesis validation record:
+
+```text
+[Current hypothesis]
+[Why plausible]
+[Minimal verification experiment]
+[Expected result]
+[Observed result]
+[Judgment] supported / rejected / inconclusive
+[Next reasoning direction]
+```
 
 ## Quick Routing
 
@@ -53,6 +86,7 @@ Load only the rule files needed for the current task:
 | Find `key`, `iv`, `salt`, password, nonce seed, or fixed salt | `rules/parameter-crypto.md` |
 | Decrypt a parameter or restore a payload | `rules/parameter-crypto.md` |
 | Identify crypto/hash/encoding library or algorithm | `rules/parameter-crypto.md` |
+| Unknown crypto, unknown parameter source, unclear obfuscated logic, or conflicting evidence | `rules/workflow-routing.md` plus the target branch rule |
 | Write JS/Python request replay code | `rules/replay-runtime.md` |
 | Analyze local/browser runtime divergence | `rules/replay-runtime.md` and `rules/field-notes.md` |
 | Analyze VM, jsVMP, opcode, bytecode, handler tables | `rules/vm-antidebug-electron.md` |

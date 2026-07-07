@@ -15,10 +15,11 @@ For complete analysis reports, include:
 9. Experience notes applied when relevant.
 10. Reproduction code or pseudocode.
 11. VM, anti-debugger, Electron, or remote-debugging result when relevant.
-12. Verification process.
-13. Conclusion.
-14. Risks and unknowns.
-15. Attachment text.
+12. Hypothesis validation records when uncertain logic, algorithm, parameter source, obfuscation, or runtime dependency was involved.
+13. Verification process.
+14. Conclusion.
+15. Risks and unknowns.
+16. Attachment text.
 
 Attachment template:
 
@@ -30,6 +31,7 @@ Attachment template:
 [Experience notes] branch drift / stale runtime / URL fidelity / browser parity / false hypotheses
 [Candidate key] key / iv / salt / source / confidence
 [Algorithm judgment] algorithm / library / evidence
+[Hypothesis validation] hypothesis / method / expected / observed / judgment / next direction
 [Runtime context] window/document/navigator/localStorage/time/random/dependencies
 [VM/jsVMP] entry / dispatcher / opcode / handler / target parameter path
 [debugger/anti-debugger] trigger / method / handling plan / verification
@@ -75,8 +77,10 @@ Before giving a final conclusion, check:
 2. Is the work inside the authorized scope?
 3. Were function context and runtime context both considered?
 4. Were encoding, compression, hash, and encryption layers checked?
-5. Can sample input generate sample output?
-6. Does the reproduction align with real request flow?
-7. Were relevant field notes considered: public helper vs wrapper, length drift, stale runtime, URL exactness, browser parity, and false hypotheses?
-8. Were recovered cookies, tokens, passwords, keys, accounts, device IDs, signed URLs, seed material, headers, payloads, and plaintext shown as-is?
-9. Are risks and alternatives stated?
+5. If logic was uncertain, were multiple hypotheses proposed and tested with minimal experiments?
+6. Were rejected or inconclusive hypotheses abandoned instead of silently carried forward?
+7. Can sample input generate sample output?
+8. Does the reproduction align with real request flow?
+9. Were relevant field notes considered: public helper vs wrapper, length drift, stale runtime, URL exactness, browser parity, and false hypotheses?
+10. Were recovered cookies, tokens, passwords, keys, accounts, device IDs, signed URLs, seed material, headers, payloads, and plaintext shown as-is?
+11. Are risks and alternatives stated?

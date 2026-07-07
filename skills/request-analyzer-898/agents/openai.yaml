@@ -1,0 +1,4 @@
+interface:
+  display_name: "Request Analyzer 898"
+  short_description: "Analyze HTTP requests and design maintainable reproductions."
+  default_prompt: "Use $request-analyzer-898 to analyze this HTTP request, classify its parameters, diagnose failures, decide browser dependencies, and propose a maintainable Python httpx reproduction project."

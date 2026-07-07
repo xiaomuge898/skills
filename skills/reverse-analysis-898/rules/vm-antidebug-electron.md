@@ -15,6 +15,12 @@ Process:
 5. Extract only the shortest path related to the target parameter and mark irrelevant branches.
 6. Instrument dynamically when needed: print opcode, handler inputs/returns, stack changes, variables before/after target generation.
 
+If the VM structure is unclear, use Hypothesis-Driven Validation before mapping the whole VM:
+
+- Hypotheses: switch dispatcher, handler table, computed goto, stack VM, register VM, mixed control-flow flattening, dynamic bytecode decode, environment-gated branch.
+- Minimal experiments: hook dispatcher input, log `pc/sp/registers`, replace one opcode/handler, freeze decoded bytecode, compare handler input/output around the target parameter, or bypass one environment check.
+- Reject a VM hypothesis when opcode movement, stack/register changes, or target output sensitivity contradicts the expected behavior.
+
 ## AST Recovery Rules
 
 - Preserve the original obfuscated file.
@@ -34,6 +40,8 @@ Process:
 3. Identify side effects: pause, blank page, redirect, risk-control report, broken parameter generation.
 4. For local samples, propose the smallest change: comment, no-op replacement, disable the specific timer, or hook the detector.
 5. Verify the page works, parameter generation is intact, DevTools can stop in business code, and no secondary anti-debugger remains.
+
+When the trigger is uncertain, test one detector hypothesis at a time. Disable or hook only one timer, constructor, console detector, shortcut handler, or window-size check, then observe whether the side effect disappears and business logic still runs.
 
 ## Electron / asar / DevTools
 
