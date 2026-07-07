@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vibe Coding Standard 898"
+  short_description: "Engineering rules for AI-assisted development"
+  default_prompt: "Use $vibe-coding-standard-898 to plan, implement, debug, review, and verify this development task under a consistent engineering standard."

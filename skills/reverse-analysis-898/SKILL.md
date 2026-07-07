@@ -19,7 +19,22 @@ When this skill is used for authorized reverse analysis, reverse evidence has pr
 
 Authorization scope is the safety boundary. If the user has not established authorization for the target or material, ask one focused authorization question before analysis. Once the task is authorized, report the evidence and recovered values as-is.
 
-## Operating Workflow
+## Rule Loading
+
+Load only the rule files needed for the current task:
+
+| Situation | Required rule |
+|---|---|
+| Scope, evidence handling, raw disclosure | `rules/scope-and-evidence.md` |
+| Material inventory, task routing, operating workflow | `rules/workflow-routing.md` |
+| In-site extraction, local Node service, pure algorithm port | `rules/reproduction-modes.md` |
+| Hard-earned X-Bogus/X-Gnarly/BSID style lessons | `rules/field-notes.md` |
+| Parameter generation, key/iv/salt, payload decrypt, algorithm ID | `rules/parameter-crypto.md` |
+| Request replay, browser/runtime context, Python reproduction | `rules/replay-runtime.md` |
+| VM/jsVMP, AST recovery, anti-debugger, Electron asar, F12, remote debugging | `rules/vm-antidebug-electron.md` |
+| Final report, response format, pre-completion checks | `rules/report-contract.md` |
+
+## Minimal Workflow
 
 1. Reconstruct the request before analysis: goal, inputs, expected output, constraints, and ambiguities.
 2. Inventory the supplied materials and name missing evidence.
@@ -30,388 +45,21 @@ Authorization scope is the safety boundary. If the user has not established auth
 7. Verify by comparing sample input/output or original/replayed requests.
 8. Answer with solution, evidence, rationale, risks, verification, and alternatives.
 
-## Material Inventory
+## Quick Routing
 
-Before analysis, list what is present and what is missing:
-
-- JavaScript files, source maps, webpack chunks, HTML, workers, wasm.
-- Network captures, HAR, curl, URL, method, headers, cookies, query, body.
-- Plaintext samples, ciphertext samples, response samples, error messages.
-- Console logs, breakpoint screenshots, runtime variable snapshots.
-- Electron install path, `app.asar`, unpacked directory, `package.json`, `main.js`, `preload.js`.
-- Fingerprint-browser shortcut, launch script, process command line, disabled DevTools/F12/Ctrl+Shift+I symptoms.
-
-If evidence is insufficient, say:
-
-```text
-Current evidence is insufficient for a conclusion.
-Missing materials:
-1. ...
-Recommended next step:
-1. ...
-```
-
-## Task Routing
-
-| User intent | Branch |
+| User intent | Start with |
 |---|---|
-| Find where `sign`, `token`, `data`, `payload`, or `X-Bogus` comes from | Parameter generation |
-| Find `key`, `iv`, `salt`, password, nonce seed, or fixed salt | Key source analysis |
-| Decrypt a parameter or restore a payload | Payload decryption |
-| Identify an algorithm or library | Library and algorithm identification |
-| Write JS/Python request replay code | Request replay |
-| Analyze VM, jsVMP, opcode, bytecode, handler tables | VM path restoration |
-| Remove or understand `debugger`, DevTools detection, anti-debugging | Anti-debugger analysis |
-| Debug Electron asar, DevTools, F12, Ctrl+Shift+I | Electron debugging switch |
-| Locate or enable `remote-debugging-port` | Remote debugging parameter discovery |
-
-A task can match multiple branches. Start with the narrowest branch that can answer the user.
-
-## Reverse Reproduction Modes
-
-Choose the final execution mode before extracting code. Do not default to full browser-environment restoration when the requested deliverable can be verified with a smaller boundary.
-
-| Mode | Use when | Extraction boundary | Default deliverable | Verification |
-|---|---|---|---|---|
-| 1. In-site extraction | The final method must run inside the original target website. | Extract only the target method plus directly used local helpers, local variables, and closure values. Keep page globals as page-provided. | Console/CDP snippet, userscript, or small pasted function for the target page. | Call the method in the real page context and compare the returned value or generated request. |
-| 2. Local Node service | Code is extracted but the final runtime is local and must not depend on a browser environment. | Extract the target path and replace browser dependencies with explicit inputs or minimal deterministic mocks. | Node.js runner plus a small local HTTP interface that any tool can call. | Call the local endpoint with a sample and compare signature, ciphertext, payload, or request fields. |
-| 3. Pure algorithm port | The target is pure calculation: codec, hash, HMAC, encryption, decryption, sorting, or numeric/string transformation. | Re-implement the algorithm in Python, JavaScript, or another suitable language using standard primitives where possible. | Pure function or CLI script with no browser, DOM, page SDK, or live runtime dependency. | Verify sample pairs, round trips, and edge cases. |
-
-Mode rules:
-
-- If the deliverable runs in the target website, use Mode 1. Do not rebuild `window`, `document`, browser globals, webpack runtime, or global variables unless the target method directly consumes them and the page does not already provide them.
-- If the deliverable must be consumed by external tools but still depends on extracted JavaScript behavior, use Mode 2. Default to Node.js and expose one small local interface rather than forcing every caller to embed the reverse code.
-- If the logic is pure math, encoding, hashing, signing, encryption, or decryption and can be proven with samples, use Mode 3. Prefer a clean pure implementation over executing copied browser code.
-- If the correct mode is unclear, state the competing modes and the evidence needed to choose one.
-
-## Field Notes From Hard Reverse Work
-
-These are experience-derived rules from successful and failed request-signing restoration. Use them as judgement prompts, not as a fixed template.
-
-- A public signing API may be a decoy or partial path. In one `X-Bogus` case, the public `frontierSign()` returned a short value while the real request wrapper generated the long request value and adjacent parameters. First prove whether the target request uses a public helper, an XHR/fetch wrapper, an interceptor, or a VM path.
-- Multiple parameters that appear together should be treated as one runtime event until evidence proves otherwise. If `X-Bogus`, `X-Gnarly`, `X-Tts-Oec-Bsid`, `msToken`, body hash, and cookies are produced from different snapshots, replay can fail even when each individual value "looks right".
-- Length drift is a real clue, not a cosmetic difference. A local signature length that differs from page runtime length usually means a branch, seed, padding, runtime config, or environment probe diverged.
-- A successful local VM run is not automatically a pure algorithm restoration. If it executes copied SDK, VM bytecode, unisec runtime, wasm, or page-derived seed, label it honestly as local runtime execution.
-- CDP is useful as an oscilloscope: capture runtime variables, compare page and local VM checkpoints, export authorized seed material, or abort a wrapper request before it reaches the network. It is not proof of pure local restoration by itself.
-- Do not keep stale CDP defaults in code paths that are supposed to be local. A stale `DEFAULT_CDP_WS`, `CDP_WS`, or hidden `--seed-from-cdp` branch can make a "local" result secretly browser-dependent.
-- Signed URLs are fragile byte strings. Re-parsing and rebuilding them after signing can corrupt `+`, `/`, `=`, `%`, custom alphabets, ordering, or empty values. If replay suddenly returns a risk code after an apparently valid signature, compare the exact pre/post signing URL string.
-- Browser parity bugs are often tiny and decisive. Examples: desktop Chrome throws `NotSupportedError` for `document.createEvent('TouchEvent')`; missing Canvas 2D drawing APIs can stop runtime bootstrap; exposing Node globals can choose the wrong branch; adding a plausible `navigator.connection` can be worse than leaving it absent.
-- Do not add browser mocks by guessing. Add a field only when static code or runtime tracing proves it is read, then compare page and local values at the nearest internal checkpoint.
-- A response with HTTP 200 can still be a failed replay. Treat business code, risk code, empty data, slider state, and response keywords as verification evidence.
-- When a false hypothesis appears, keep it as a rule. Example: overriding a saved runtime context with a newer cookie value can break signing; not every "newer" value belongs inside every seed or closure.
-- When a working scheme depends on a local seed package, record how to refresh it and what script consumes it, but keep the signer boundary clean. Seed export and signing are different jobs.
-- For authorized reverse tasks, raw evidence is more important than privacy cleanup. Preserve and show exact recovered values when they are needed to prove the chain.
-
-## Evidence-First Rules
-
-- Do not say "looks like AES" or "probably MD5" without evidence. State the code location, input/output shape, function arguments, and confidence.
-- Do not trust obfuscated variable names as semantic proof. Prefer data flow, call relationships, arguments, return values, and output features.
-- Do not skip encoding layers. Many parameters are layered, such as `JSON -> gzip -> AES -> Base64 -> URL encode`.
-- Do not ignore runtime variables. Keys, salts, tokens, nonces, timestamps, random values, and device fingerprints often exist only at runtime.
-- Mark every uncertain claim with its uncertainty and the evidence needed to close it.
-- Do not redact recovered values. If analysis reveals cookies, tokens, passwords, private keys, device IDs, account IDs, proxy credentials, signed URLs, seed material, headers, payloads, or plaintext inside the authorized material, show them exactly as recovered.
-
-## Rebuild the Execution Context
-
-When extracting code for protocol or frontend encryption analysis, restore the execution context layer by layer. Do not copy only the target function and assume it is enough. Browser and runtime dependencies often decide the final signature or ciphertext.
-
-For Mode 1 in-site extraction, the real page is the execution context. Keep the extraction narrow and reuse the page's native globals instead of rebuilding them locally.
-
-Rebuild in this order:
-
-1. Function context: target function, closure variables, module imports, webpack runtime, global aliases.
-2. Browser context: `window`, `document`, `navigator`, `location`, `screen`, `performance`, `crypto`, `localStorage`, `sessionStorage`, `cookie`.
-3. Time and randomness: `Date.now()`, `new Date()`, `Math.random()`, `crypto.getRandomValues()`, nonce, millisecond/second timestamp precision.
-4. Request context: URL path, query, body, headers, cookies, user-agent, referer, server-issued fields.
-5. Dependency context: `CryptoJS`, `WebCrypto`, `node:crypto`, custom encoders, wasm, workers, dynamic imports.
-6. Fingerprint context: language, timezone, platform, canvas/webgl, device ID, experiment flags, page bootstrap variables.
-7. Verification context: real sample input, real sample output, packet capture comparison, breakpoint variable snapshots.
-
-Use mocks and hooks only to reproduce authorized local behavior. Document every mocked value and explain whether it affects the output.
-
-## Parameter Generation
-
-Use for: "Where does this parameter come from?", "How is sign generated?", "How is token calculated?", "Restore request parameters."
-
-Process:
-
-1. Search target names: `sign`, `token`, `timestamp`, `nonce`, `data`, `payload`, `encrypt`, `signature`, `X-Bogus`.
-2. Search request entry points: `fetch`, `XMLHttpRequest`, `axios`, `$.ajax`, `sendBeacon`, wrappers, interceptors.
-3. Find assignment points, generator functions, callers, and return-value flow.
-4. Identify participating fields: path, query, body, cookies, headers, user-agent, timestamp, nonce, device fingerprint, server return value, fixed salt.
-5. Restore concatenation order, sorting, case normalization, separators, empty-value handling.
-6. If several parameters appear in the same protected request, first decide whether they are one runtime event or independent generators.
-7. Restore encoding, compression, hash, HMAC, encryption, Base64, and URL encoding layers.
-8. Rebuild the execution context and reproduce the generator.
-9. Compare with the original request: format, length, timestamp precision, nonce shape, signature output, response status, response code, and response keywords.
-
-Output:
-
-```text
-[Parameter]
-[Reproduction mode]
-[Generation entry]
-[Call chain]
-[Participating fields]
-[Concatenation/sorting rules]
-[Encoding/hash/encryption layers]
-[Runtime context dependencies]
-[Reproduction code or pseudocode]
-[Verification result]
-[Unknowns]
-```
-
-## Key Source Analysis
-
-Use for: "Find the key", "Find iv", "Find salt", "Find AES key."
-
-Process:
-
-1. Search hardcoded strings, config objects, constant pools, environment variables, server-issued fields.
-2. Search `window.xxx`, `globalThis.xxx`, `localStorage`, `sessionStorage`, `cookie`.
-3. Check whether timestamp, random value, user ID, device fingerprint, or server field derives the key.
-4. Check obfuscation, concatenation, reversing, Base64, Hex, URL encoding.
-5. Prove it enters an encryption/decryption function as `key`, `iv`, `salt`, `message`, or `password`.
-6. Verify with sample input/output. Never call a string a key just because it looks like one.
-
-Output:
-
-```text
-[Candidate key]
-[Source]
-[Type] fixed / dynamic / server-issued / user-scoped / derived / obfuscated
-[Related algorithm]
-[Argument-passing evidence]
-[Runtime required]
-[Verification method]
-[Confidence]
-```
-
-## Payload Decryption
-
-Use for: "Decrypt this parameter", "Restore payload", "What is inside data?", "Open this ciphertext."
-
-Process:
-
-1. Confirm the ciphertext sample and request location.
-2. Identify outer encoding: URL encode, Base64, Hex, JSON stringify, gzip, protobuf.
-3. Identify algorithm: AES, DES/3DES, RSA, SM2/SM4, XOR, or custom.
-4. Confirm `key`, `iv`, `mode`, `padding`, AAD/tag for GCM-like flows.
-5. Restore the decryption flow and record the exact failure point if it does not close.
-6. Verify with a sample round trip.
-
-Output:
-
-```text
-[Ciphertext parameter]
-[Encoding layers]
-[Encryption algorithm]
-[Mode/padding]
-[Key/iv/salt]
-[Decryption flow]
-[Decryption result]
-[Failure reason]
-[Materials needed next]
-```
-
-## Library and Algorithm Identification
-
-Search first:
-
-- `CryptoJS`
-- `crypto.subtle`
-- `node:crypto`, `createHash`, `createHmac`
-- `JSEncrypt`
-- `node-forge`
-- `jsrsasign`
-- `sm-crypto`
-- `crypto-js`
-
-Common features:
-
-- MD5: 32 hex characters.
-- SHA1: 40 hex characters.
-- SHA256: 64 hex characters.
-- HMAC: both `key` and `message` are present.
-- AES: key commonly 16/24/32 bytes; mode commonly CBC/ECB/GCM/CTR.
-- RSA: PEM, public/private key markers, `BEGIN PUBLIC KEY`.
-- Base64: alphabet commonly includes `A-Z a-z 0-9 + / =`.
-- URL encoding: `%2F`, `%3D`, `%2B`, `%25`.
-- SM2/SM3/SM4: often appears in national-crypto libraries or names.
-
-Output:
-
-```text
-[Candidate library]
-[Candidate algorithm]
-[Evidence]
-[Input structure]
-[Output features]
-[Standard or custom]
-[Modification signs]
-[Still needs verification]
-```
-
-## Request Replay
-
-Use for: "Write reproduction code", "Replay with Python", "Replay with JS", "Restore the API request."
-
-Process:
-
-1. Choose Mode 1, Mode 2, or Mode 3 before writing reproduction code.
-2. Define method, URL, headers, cookies, query, and body.
-3. Separate fixed fields from dynamic fields.
-4. Reproduce dynamic parameter generation using the smallest boundary for the chosen mode.
-5. Preserve the signed URL exactly after signing; do not rebuild signed query strings unless the signing algorithm requires it.
-6. Rebuild only the required context; do not copy unrelated globals, modules, or browser mocks.
-7. Build the smallest request. Avoid batch requests.
-8. Compare original and replayed requests: parameter format, length, timestamp precision, nonce, sign, response status, response code, and response keywords.
-
-Python requirements:
-
-- Use Python 3.12 by default.
-- Create or reuse a venv before running Python.
-- Install pip packages only inside the venv.
-- Prefer the standard library.
-- Add third-party dependencies only when they clearly reduce complexity or risk.
-- Comment code enough to explain why each context mock or crypto step exists.
-- Do not redact values generated or recovered by the reproduction code.
-
-## VM / jsVMP Path Restoration
-
-Use for: "Analyze VM", "Analyze jsVMP", "Restore opcode", "Restore bytecode."
-
-If obfuscation is encountered, try using AST to recover the obfuscated code.
-
-Process:
-
-1. Confirm whether it is actually VM/jsVMP: large arrays, bytecode, constant pool, `while/switch` dispatch, opcode, pc/sp/stack/context/register, handler table.
-2. Locate VM entry: bytecode source, constant pool source, external parameter entry, return-value flow.
-3. Map opcode to handlers, stack/register operations, jumps, calls, property access, string decoding.
-4. If obfuscation blocks static reading, use AST restoration for constant strings, control-flow flattening, and wrapper windows before attempting a full rewrite.
-5. Extract only the shortest path related to the target parameter and mark irrelevant branches.
-6. Instrument dynamically when needed: print opcode, handler inputs/returns, stack changes, variables before/after target generation.
-
-Output:
-
-```text
-[Is VM/jsVMP]
-[Evidence]
-[VM entry]
-[Bytecode/constant pool source]
-[Dispatcher location]
-[Key opcode/handler]
-[Target parameter path]
-[Restorable part]
-[Still needs dynamic verification]
-```
-
-## Anti-Debugger Analysis
-
-Use for: "Remove debugger", "Analyze anti-debugging", "DevTools freezes", "DevTools is detected."
-
-Process:
-
-1. Search `debugger`, `setInterval`, `setTimeout`, `Function("debugger")`, `constructor("debugger")`, `eval`, `console.clear`, `devtools`, `isOpen`.
-2. Identify the trigger: timer, constructor, console detector, window-size delta, shortcut, context menu.
-3. Identify side effects: pause, blank page, redirect, risk-control report, broken parameter generation.
-4. For authorized local samples, propose the smallest change: comment, no-op replacement, disable the specific timer, or hook the detector.
-5. Verify the page works, parameter generation is intact, DevTools can stop in business code, and no secondary anti-debugger remains.
-
-Output:
-
-```text
-[Anti-debugger type]
-[Trigger location]
-[Trigger method]
-[Side effects]
-[Handling plan]
-[Modification points]
-[Verification result]
-[Risks]
-```
-
-## Electron / asar / DevTools
-
-Use for: "Remove debugger from asar", "Fingerprint browser blocks F12/Ctrl+Shift+I", "Enable DevTools", "Debug Electron app.asar."
-
-Boundary: only handle local, owned, or user-authorized Electron/fingerprint-browser clients. Back up the original `asar` or directory before modification.
-
-Process:
-
-1. Identify install path, `resources`, `app.asar`, and `app.asar.unpacked`.
-2. Inspect `package.json`, `main.js`, `index.js`, `background.js`, `preload.js`, renderer bundle.
-3. Search `openDevTools`, `devTools`, `webPreferences`, `BrowserWindow`, `globalShortcut`, `before-input-event`, `setMenu`, `F12`, `Control+Shift+I`, `preventDefault`.
-4. Search `debugger`, `Function("debugger")`, `constructor("debugger")`, `setInterval`, `devtools-detect`.
-5. Identify source: main process, renderer, preload, menu, bundled obfuscated code.
-6. Use the smallest change: remove shortcut blocking, restore `webContents.openDevTools()`, set `webPreferences.devTools=true`, preserve business logic.
-7. Repack or replace the unpacked directory and verify DevTools startup.
-
-Output:
-
-```text
-[Electron app path]
-[asar path]
-[Entry file]
-[DevTools disable location]
-[Shortcut blocking location]
-[debugger trigger location]
-[Smallest modification]
-[Backup file]
-[Verification method]
-[Risks and rollback]
-```
-
-## remote-debugging-port Discovery
-
-Use for: "Find remote-debugging-port", "Enable remote debugging port", "Fingerprint browser remote debugging."
-
-Process:
-
-1. Confirm launch mode: shortcut, script, Electron main process, child Chromium process, config file.
-2. Search `remote-debugging-port`, `remoteDebuggingPort`, `debuggingPort`, `--remote-debugging-port`, `appendSwitch`, `commandLine.appendSwitch`, `spawn`, `execFile`, `child_process`, `chrome.exe`.
-3. Identify source: code, config, database, command line, environment variable, random allocation.
-4. Choose modification path: shortcut argument, config change, `app.commandLine.appendSwitch`, child-process argument.
-5. Verify `http://127.0.0.1:<port>/json/version` and `/json/list`; confirm the listener is local-only.
-
-## Report Contract
-
-For complete analysis reports, include:
-
-1. Task goal.
-2. Input materials.
-3. Analysis process.
-4. Key code locations.
-5. Reproduction mode.
-6. Parameter generation logic.
-7. Key/iv/salt sources.
-8. Algorithm judgment.
-9. Experience notes applied when relevant.
-10. Reproduction code or pseudocode.
-11. VM, anti-debugger, Electron, or remote-debugging result when relevant.
-12. Verification process.
-13. Conclusion.
-14. Risks and unknowns.
-15. Attachment text.
-
-Attachment template:
-
-```text
-[Key functions]
-[Call chain] entry -> middle function -> crypto function -> request send
-[Key parameters] name / source / generation method
-[Reproduction mode] in-site extraction / local Node service / pure algorithm port
-[Experience notes] branch drift / stale runtime / URL fidelity / browser parity / false hypotheses
-[Candidate key] key / iv / salt / source / confidence
-[Algorithm judgment] algorithm / library / evidence
-[Runtime context] window/document/navigator/localStorage/time/random/dependencies
-[VM/jsVMP] entry / dispatcher / opcode / handler / target parameter path
-[debugger/anti-debugger] trigger / method / handling plan / verification
-[Electron asar] asar path / entry file / modification / backup
-[remote-debugging-port] location / source / verification URL
-[Reproduction code] JS or Python
-[Verification record] input / output / comparison
-```
+| Find where `sign`, `token`, `data`, `payload`, or `X-Bogus` comes from | `rules/parameter-crypto.md` |
+| Find `key`, `iv`, `salt`, password, nonce seed, or fixed salt | `rules/parameter-crypto.md` |
+| Decrypt a parameter or restore a payload | `rules/parameter-crypto.md` |
+| Identify crypto/hash/encoding library or algorithm | `rules/parameter-crypto.md` |
+| Write JS/Python request replay code | `rules/replay-runtime.md` |
+| Analyze local/browser runtime divergence | `rules/replay-runtime.md` and `rules/field-notes.md` |
+| Analyze VM, jsVMP, opcode, bytecode, handler tables | `rules/vm-antidebug-electron.md` |
+| Handle obfuscated JS | `rules/vm-antidebug-electron.md` |
+| Remove or understand `debugger`, DevTools detection, anti-debugging | `rules/vm-antidebug-electron.md` |
+| Debug Electron asar, DevTools, F12, Ctrl+Shift+I | `rules/vm-antidebug-electron.md` |
+| Locate or enable `remote-debugging-port` | `rules/vm-antidebug-electron.md` |
 
 ## Response Contract
 
@@ -441,16 +89,4 @@ Commands, samples, request comparison, or why verification was not possible.
 1-3 optional paths and their cost.
 ```
 
-## Pre-Completion Reverse Verification
-
-Before giving a final conclusion, check:
-
-1. Does the answer satisfy the user's goal?
-2. Is the work inside the authorized scope?
-3. Were function context and runtime context both considered?
-4. Were encoding, compression, hash, and encryption layers checked?
-5. Can sample input generate sample output?
-6. Does the reproduction align with real request flow?
-7. Were relevant field notes considered: public helper vs wrapper, length drift, stale runtime, URL exactness, browser parity, and false hypotheses?
-8. Were recovered cookies, tokens, passwords, keys, accounts, device IDs, signed URLs, seed material, headers, payloads, and plaintext shown as-is?
-9. Are risks and alternatives stated?
+Before finalizing, load `rules/report-contract.md` and run its pre-completion checklist.
